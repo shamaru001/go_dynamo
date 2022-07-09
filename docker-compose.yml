@@ -1,0 +1,44 @@
+#Docker Compose for development
+version: '3.5'
+services:
+  app_db:
+    image: amazon/dynamodb-local:1.18.0
+    container_name: app_db
+    restart: always
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "true"
+      MYSQL_DATABASE: app
+    networks: [app]
+    ports:
+      - 3636:8000
+#  app:
+#    image: app:1.0
+#    container_name: app
+#    user: "1000:1000"
+#    environment:
+#      #DB CONFIGURATION
+#      DB_HOST: app_db
+#      NODE_ENV: development_docker
+#      PORT: 3000
+#      GUILTY_DB_PORT: 3306
+#      MOCHAWESOME_REPORTDIR: test/report
+#    restart: always
+#    build:
+#      context: .
+#      dockerfile: ./development/Dockerfile
+#    volumes:
+#      - type: bind
+#        source: .
+#        target: /app
+#    ports:
+#      - 3000:3000
+#      - 9229:9229 #debug port
+#    depends_on:
+#      - app_db
+#      - app_session_db
+#    networks: [app]
+
+networks:
+  app:
+    name: app
+    driver: bridge
