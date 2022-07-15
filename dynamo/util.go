@@ -24,7 +24,7 @@ func CreateItem(person Person) error {
 				S: aws.String(person.Description),
 			},
 		},
-		TableName: &TableName,
+		TableName: &PeopleTable,
 	})
 
 	return err
@@ -37,7 +37,7 @@ func GetItem(id int) (person Person, err error) {
 				N: aws.String(strconv.Itoa(id)),
 			},
 		},
-		TableName: &TableName,
+		TableName: &PeopleTable,
 	})
 
 	if err != nil {
@@ -49,7 +49,6 @@ func GetItem(id int) (person Person, err error) {
 	return person, err
 
 }
-
 
 func UpdateItem(person Person) error {
 	_, err := Dynamo.UpdateItem(&dynamodb.UpdateItemInput{
@@ -74,7 +73,7 @@ func UpdateItem(person Person) error {
 				N: aws.String(strconv.Itoa(person.Id)),
 			},
 		},
-		TableName:        &TableName,
+		TableName:        &PeopleTable,
 		UpdateExpression: aws.String("SET #N = :Name, #I = :Image, #D = :Description"),
 	})
 

@@ -1,6 +1,8 @@
 package dynamo
 
 import (
+	"os"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -14,10 +16,10 @@ type Person struct {
 }
 
 var (
-	TableName  = "people"
-	RegionName = "us-west-1"
-	Endpoint   = "http://localhost:3636"
-	Id         = 1
+	PeopleTable = "people"
+	RegionName  = "us-west-1"
+	Endpoint    = os.Getenv("DYNAMODB")
+	Id          = 1
 )
 
 // make new User
@@ -31,14 +33,33 @@ var User Person = Person{
 var Dynamo *dynamodb.DynamoDB
 
 func ConnectDynamo() (db *dynamodb.DynamoDB) {
-	return dynamodb.New(session.Must(session.NewSession(&aws.Config{
+	sess := session.Must(session.NewSession(&aws.Config{
 		Region:   &RegionName,
 		Endpoint: &Endpoint,
-	})))
+	}))
+	return dynamodb.New(sess)
 }
 
-func CreateTable() error {
+func CreateTable(atrrDefinitions []*dynamodb.AttributeDefinition, keySchema []*dynamodb.KeySchemaElement, PeopleTable string) error {
+	_, err := Dynamo.CreateTable(&dynamodb.CreateTableInput{
+		AttributeDefinitions: atrrDefinitions,
+		KeySchema:            keySchema,
+		BillingMode:          aws.String(dynamodb.BillingModePayPerRequest),
+		TableName:            &PeopleTable,
+	})
 
+	if err != nil {
+		panic(err)
+	}
+
+	return err
+}
+
+func InjectItem() error {
+	return CreateItem(User)
+}
+
+func CreateTablePeople() error {
 	atrrDefinitions := []*dynamodb.AttributeDefinition{
 		{
 			AttributeName: aws.String("Id"),
@@ -53,17 +74,25 @@ func CreateTable() error {
 		},
 	}
 
-	_, err := Dynamo.CreateTable(&dynamodb.CreateTableInput{
-		AttributeDefinitions: atrrDefinitions,
-		KeySchema:            keySchema,
-		BillingMode:          aws.String(dynamodb.BillingModePayPerRequest),
-		TableName:            &TableName,
-	})
+	return CreateTable(atrrDefinitions, keySchema, "people")
 
-	return err
 }
 
-func InjectItem() error {
-	return CreateItem(User)
-}
+func CreateTableHistory() error {
+	atrrDefinitions := []*dynamodb.AttributeDefinition{
+		{
+			AttributeName: aws.String("Id"),
+			AttributeType: aws.String("N"),
+		},
+	}
 
+	keySchema := []*dynamodb.KeySchemaElement{
+		{
+			AttributeName: aws.String("Id"),
+			KeyType:       aws.String("HASH"),
+		},
+	}
+
+	return CreateTable(atrrDefinitions, keySchema, "history")
+
+}
